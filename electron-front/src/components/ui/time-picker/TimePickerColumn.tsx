@@ -23,6 +23,7 @@ const TimePickerColumn: React.FC<TimePickerColumnProps> = ({
 
   // Handle mouse wheel events for scrolling
   const handleWheel = (e: React.WheelEvent) => {
+    console.log('handle wheel:', e.deltaY, scrollRef.current)
     if (scrollRef.current) {
       scrollRef.current.scrollTop += e.deltaY;
     }
@@ -34,7 +35,7 @@ const TimePickerColumn: React.FC<TimePickerColumnProps> = ({
         {title}
       </div>
       <ScrollArea className="h-[180px] w-full" scrollHideDelay={0} onWheel={handleWheel}>
-        <div className="flex flex-col items-stretch py-1" ref={scrollRef}>
+        <div className="h-[180px] w-full flex flex-col items-stretch py-1 overflow-y-auto hide-scrollbar" ref={scrollRef}>
           {items.map((item) => (
             <TimePickerItem
               key={item}

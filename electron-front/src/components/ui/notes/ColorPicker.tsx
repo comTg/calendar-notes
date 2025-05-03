@@ -31,13 +31,13 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ selectedColor, onColorSelect 
   return (
     <div className="grid gap-2">
       <label className="text-sm font-medium">{t('color')}</label>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-nowrap gap-2">
         {colorOptions.map((colorOption) => (
           <button
             key={colorOption.value}
             type="button"
             className={cn(
-              "w-8 h-8 rounded-full transition-all hover:scale-110",
+              "w-4 h-4 rounded-full transition-all hover:scale-110",
               selectedColor === colorOption.value ? "ring-2 ring-ring scale-110 shadow-md" : "hover:shadow-sm"
             )}
             style={{ backgroundColor: colorOption.value }}
@@ -47,6 +47,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ selectedColor, onColorSelect 
           />
         ))}
       </div>
+      <div className="flex flex-wrap gap-2 min-h-[32px]"></div>
     </div>
   );
 };

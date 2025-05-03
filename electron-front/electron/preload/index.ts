@@ -1,29 +1,31 @@
 import { ipcRenderer, contextBridge } from 'electron'
 
 // --------- Expose some API to the Renderer process ---------
-contextBridge.exposeInMainWorld('ipcRenderer', {
-  on(...args: Parameters<typeof ipcRenderer.on>) {
-    const [channel, listener] = args
-    return ipcRenderer.on(channel, (event, ...args) => listener(event, ...args))
-  },
-  off(...args: Parameters<typeof ipcRenderer.off>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.off(channel, ...omit)
-  },
-  send(...args: Parameters<typeof ipcRenderer.send>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.send(channel, ...omit)
-  },
-  invoke(...args: Parameters<typeof ipcRenderer.invoke>) {
-    const [channel, ...omit] = args
-    return ipcRenderer.invoke(channel, ...omit)
-  },
+contextBridge.exposeInMainWorld('ipcRenderer', withPrototype(ipcRenderer))
 
-  // You can expose other APTs you need here.
-  // ...
-})
+// `exposeInMainWorld` can't detect attributes and methods of `prototype`, manually patching it.
+function withPrototype(obj: Record<string, any>) {
+  const protos = Object.getPrototypeOf(obj)
+
+  for (const [key, value] of Object.entries(protos)) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) continue
+
+    if (typeof value === 'function') {
+      // Some native APIs, like `NodeJS.EventEmitter['on']`, don't work in the Renderer process. Wrapping them into a function.
+      obj[key] = function (...args: any) {
+        return value.call(obj, ...args)
+      }
+    } else {
+      obj[key] = value
+    }
+  }
+  return obj
+}
 
 // --------- Preload scripts loading ---------
+/**
+ * Functions can now be exposed to the renderer process by defining them within the window object and explicitly declaring that the variable is not empty and thus it is legitimate. 
+ */
 function domReady(condition: DocumentReadyState[] = ['complete', 'interactive']) {
   return new Promise(resolve => {
     if (condition.includes(document.readyState)) {
@@ -41,12 +43,12 @@ function domReady(condition: DocumentReadyState[] = ['complete', 'interactive'])
 const safeDOM = {
   append(parent: HTMLElement, child: HTMLElement) {
     if (!Array.from(parent.children).find(e => e === child)) {
-      return parent.appendChild(child)
+      parent.appendChild(child)
     }
   },
   remove(parent: HTMLElement, child: HTMLElement) {
     if (Array.from(parent.children).find(e => e === child)) {
-      return parent.removeChild(child)
+      parent.removeChild(child)
     }
   },
 }
@@ -108,10 +110,15 @@ function useLoading() {
 
 // ----------------------------------------------------------------------
 
+// 添加应用API接口
+contextBridge.exposeInMainWorld('electronAPI', {
+  getAppDataPath: () => ipcRenderer.invoke('get-app-data-path'),
+});
+
 const { appendLoading, removeLoading } = useLoading()
 domReady().then(appendLoading)
 
-window.onmessage = (ev) => {
+window.onmessage = ev => {
   ev.data.payload === 'removeLoading' && removeLoading()
 }
 

@@ -19,6 +19,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // │ └── index.html    > Electron-Renderer
 //
 process.env.APP_ROOT = path.join(__dirname, '../..')
+// 设置应用数据路径，提供给渲染进程使用
+process.env.APP_DATA_PATH = path.join(app.getPath('userData'), 'CalendarNotes')
 
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
@@ -45,7 +47,9 @@ const indexHtml = path.join(RENDERER_DIST, 'index.html')
 
 async function createWindow() {
   win = new BrowserWindow({
-    title: 'Main window',
+    title: '日历笔记',
+    width: 1200,
+    height: 800,
     icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
     webPreferences: {
       preload,
@@ -120,4 +124,9 @@ ipcMain.handle('open-win', (_, arg) => {
   } else {
     childWindow.loadFile(indexHtml, { hash: arg })
   }
+})
+
+// 添加IPC处理程序用于获取应用数据路径
+ipcMain.handle('get-app-data-path', () => {
+  return process.env.APP_DATA_PATH
 })

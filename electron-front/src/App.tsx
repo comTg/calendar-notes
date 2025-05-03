@@ -1,40 +1,44 @@
-import { useState } from 'react'
-import './App.css'
-import { CalendarView } from './components/calendar/calendar-view'
-import { Sidebar } from './components/calendar/sidebar'
-import { Menu, CalendarRange } from 'lucide-react'
-import { Button } from './components/ui/button'
-import { Toaster } from './components/ui/toaster'
 
-function App() {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+import React, { lazy, Suspense } from "react";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { LanguageProvider } from "@/context/LanguageContext";
 
-  return (
-    <div className="App">
-      <header className="flex justify-between items-center p-4 border-b">
-        <div className="flex items-center space-x-2">
-          <CalendarRange className="h-6 w-6" />
-          <h1 className="text-xl font-bold">日历笔记</h1>
-        </div>
-        <Button variant="outline" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-          <Menu className="h-5 w-5" />
-        </Button>
-      </header>
+// Import pages directly instead of lazy loading to avoid potential issues
+import Index from "./pages/Index";
+import NotFound from "./pages/NotFound";
 
-      <main className="container mx-auto px-4 py-6">
-        <CalendarView onSelectDate={setSelectedDate} />
-      </main>
+// Create QueryClient instance
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
-      <Sidebar 
-        selectedDate={selectedDate} 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-      />
-      
-      <Toaster />
-    </div>
-  )
-}
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
+      <LanguageProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LanguageProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
+);
 
-export default App
+export default App;

@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import os from 'node:os'
 import { update } from './update'
+import fs from 'node:fs'
+import { getAllNotes, getNotesForDate, addNote, updateNote, deleteNote } from './db/noteService'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -21,6 +23,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 process.env.APP_ROOT = path.join(__dirname, '../..')
 // 设置应用数据路径，提供给渲染进程使用
 process.env.APP_DATA_PATH = path.join(app.getPath('userData'), 'CalendarNotes')
+
+// 确保应用数据目录存在
+if (!fs.existsSync(process.env.APP_DATA_PATH)) {
+  fs.mkdirSync(process.env.APP_DATA_PATH, { recursive: true });
+}
 
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
@@ -129,4 +136,35 @@ ipcMain.handle('open-win', (_, arg) => {
 // 添加IPC处理程序用于获取应用数据路径
 ipcMain.handle('get-app-data-path', () => {
   return process.env.APP_DATA_PATH
+})
+
+// 笔记相关的IPC处理程序
+ipcMain.handle('get-all-notes', () => {
+  return getAllNotes()
+})
+
+ipcMain.handle('get-notes-for-date', (_, date) => {
+  return getNotesForDate(new Date(date))
+})
+
+ipcMain.handle('add-note', (_, note) => {
+  return addNote({
+    ...note,
+    date: new Date(note.date),
+    reminder: note.reminder ? new Date(note.reminder) : null
+  })
+})
+
+ipcMain.handle('update-note', (_, note) => {
+  return updateNote({
+    ...note,
+    date: new Date(note.date),
+    createdAt: new Date(note.createdAt),
+    updatedAt: new Date(note.updatedAt),
+    reminder: note.reminder ? new Date(note.reminder) : null
+  })
+})
+
+ipcMain.handle('delete-note', (_, id) => {
+  return deleteNote(id)
 })

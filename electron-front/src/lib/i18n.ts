@@ -89,7 +89,11 @@ export const translations: {
     selectTags: '选择标签',
     createNewTag: '创建新标签',
     showCalendar: '显示日历',
-    showNotes: '显示笔记'
+    showNotes: '显示笔记',
+    error: '错误',
+    failedToCreateNote: '创建笔记失败',
+    failedToUpdateNote: '更新笔记失败',
+    failedToDeleteNote: '删除笔记失败'
   },
   en: {
     calendarNotes: 'Calendar Notes',
@@ -173,6 +177,10 @@ export const translations: {
     selectTags: 'Select Tags',
     createNewTag: 'Create New Tag',
     showCalendar: 'Show Calendar',
-    showNotes: 'Show Notes'
+    showNotes: 'Show Notes',
+    error: 'Error',
+    failedToCreateNote: 'Failed to create note',
+    failedToUpdateNote: 'Failed to update note',
+    failedToDeleteNote: 'Failed to delete note'
   }
 };

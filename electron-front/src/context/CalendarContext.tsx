@@ -1,10 +1,25 @@
-
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { addMonths, subMonths, addWeeks, subWeeks, addDays, subDays } from 'date-fns';
 import { CalendarMode, Note } from '@/types/calendar';
 import { generateCalendarMonth } from '@/lib/calendar-utils';
 import { toast } from '@/hooks/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
+
+interface ElectronAPI {
+  notes: {
+    getAll: () => Promise<Note[]>;
+    getForDate: (date: Date) => Promise<Note[]>;
+    add: (note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Note>;
+    update: (note: Note) => Promise<Note>;
+    delete: (id: string) => Promise<boolean>;
+  }
+}
+
+declare global {
+  interface Window {
+    electronAPI?: ElectronAPI;
+  }
+}
 
 interface CalendarContextType {
   currentDate: Date;
@@ -34,10 +49,12 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const { t } = useLanguage();
   
+  // 是否支持电子存储（在Electron环境中运行）
+  const hasElectronStorage = typeof window !== 'undefined' && window.electronAPI !== undefined;
+  
   // Create welcome note function
   const createWelcomeNote = useCallback(() => {
-    const welcomeNote: Note = {
-      id: '1',
+    const welcomeNote: Omit<Note, 'id' | 'createdAt' | 'updatedAt'> = {
       title: t('welcome'),
       content: t('welcomeNote'),
       date: new Date(),
@@ -46,40 +63,75 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       reminder: null,
       isPinned: true,
       isCompleted: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     };
-    setNotes([welcomeNote]);
-  }, [t]);
+    
+    if (hasElectronStorage) {
+      window.electronAPI?.notes.add(welcomeNote)
+        .then(newNote => {
+          setNotes([newNote]);
+        })
+        .catch(error => {
+          console.error('Failed to add welcome note:', error);
+        });
+    } else {
+      // Fallback to localStorage for non-Electron environments or development
+      const fallbackNote: Note = {
+        ...welcomeNote,
+        id: '1',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      setNotes([fallbackNote]);
+      localStorage.setItem('calendarNotes', JSON.stringify([fallbackNote]));
+    }
+  }, [t, hasElectronStorage]);
   
-  // Load notes from localStorage on initial render
+  // Load notes on initial render
   useEffect(() => {
-    const savedNotes = localStorage.getItem('calendarNotes');
-    if (savedNotes) {
-      try {
-        const parsedNotes = JSON.parse(savedNotes).map((note: any) => ({
-          ...note,
-          date: new Date(note.date),
-          createdAt: new Date(note.createdAt),
-          updatedAt: new Date(note.updatedAt),
-          reminder: note.reminder ? new Date(note.reminder) : null,
-        }));
-        setNotes(parsedNotes);
-      } catch (error) {
-        console.error('Failed to parse saved notes:', error);
-        // If there's an error, create the welcome note
+    if (hasElectronStorage) {
+      // 从SQLite数据库加载笔记
+      window.electronAPI?.notes.getAll()
+        .then(loadedNotes => {
+          if (loadedNotes && loadedNotes.length > 0) {
+            setNotes(loadedNotes);
+          } else {
+            // 如果没有笔记，创建欢迎笔记
+            createWelcomeNote();
+          }
+        })
+        .catch(error => {
+          console.error('Failed to load notes from database:', error);
+          createWelcomeNote();
+        });
+    } else {
+      // Fallback to localStorage for non-Electron environments or development
+      const savedNotes = localStorage.getItem('calendarNotes');
+      if (savedNotes) {
+        try {
+          const parsedNotes = JSON.parse(savedNotes).map((note: any) => ({
+            ...note,
+            date: new Date(note.date),
+            createdAt: new Date(note.createdAt),
+            updatedAt: new Date(note.updatedAt),
+            reminder: note.reminder ? new Date(note.reminder) : null,
+          }));
+          setNotes(parsedNotes);
+        } catch (error) {
+          console.error('Failed to parse saved notes:', error);
+          createWelcomeNote();
+        }
+      } else {
         createWelcomeNote();
       }
-    } else {
-      // If no notes exist, create the welcome note
-      createWelcomeNote();
     }
-  }, [createWelcomeNote]);
+  }, [createWelcomeNote, hasElectronStorage]);
   
-  // Save notes to localStorage whenever they change
+  // Save notes to localStorage for non-Electron environments
   useEffect(() => {
-    localStorage.setItem('calendarNotes', JSON.stringify(notes));
-  }, [notes]);
+    if (!hasElectronStorage && notes.length > 0) {
+      localStorage.setItem('calendarNotes', JSON.stringify(notes));
+    }
+  }, [notes, hasElectronStorage]);
   
   const nextPeriod = useCallback(() => {
     switch (calendarMode) {
@@ -112,39 +164,109 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [calendarMode]);
   
   const addNote = useCallback((note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newNote: Note = {
-      ...note,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    
-    setNotes(prevNotes => [...prevNotes, newNote]);
-    toast({
-      title: t('noteAdded'),
-      description: t('successfullyCreated'),
-    });
-  }, [t]);
+    if (hasElectronStorage) {
+      window.electronAPI?.notes.add(note)
+        .then(newNote => {
+          setNotes(prevNotes => [...prevNotes, newNote]);
+          toast({
+            title: t('noteAdded'),
+            description: t('successfullyCreated'),
+          });
+        })
+        .catch(error => {
+          console.error('Failed to add note:', error);
+          toast({
+            title: t('error'),
+            description: t('failedToCreateNote'),
+            variant: 'destructive',
+          });
+        });
+    } else {
+      // Fallback for non-Electron environments
+      const newNote: Note = {
+        ...note,
+        id: Date.now().toString(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      
+      setNotes(prevNotes => [...prevNotes, newNote]);
+      toast({
+        title: t('noteAdded'),
+        description: t('successfullyCreated'),
+      });
+    }
+  }, [hasElectronStorage, t]);
   
   const updateNote = useCallback((updatedNote: Note) => {
-    setNotes(prevNotes => prevNotes.map(note => 
-      note.id === updatedNote.id 
-        ? { ...updatedNote, updatedAt: new Date() } 
-        : note
-    ));
-    toast({
-      title: t('noteUpdated'),
-      description: t('successfullyUpdated'),
-    });
-  }, [t]);
+    if (hasElectronStorage) {
+      window.electronAPI?.notes.update(updatedNote)
+        .then(result => {
+          setNotes(prevNotes => prevNotes.map(note => 
+            note.id === updatedNote.id ? result : note
+          ));
+          toast({
+            title: t('noteUpdated'),
+            description: t('successfullyUpdated'),
+          });
+        })
+        .catch(error => {
+          console.error('Failed to update note:', error);
+          toast({
+            title: t('error'),
+            description: t('failedToUpdateNote'),
+            variant: 'destructive',
+          });
+        });
+    } else {
+      // Fallback for non-Electron environments
+      setNotes(prevNotes => prevNotes.map(note => 
+        note.id === updatedNote.id 
+          ? { ...updatedNote, updatedAt: new Date() } 
+          : note
+      ));
+      toast({
+        title: t('noteUpdated'),
+        description: t('successfullyUpdated'),
+      });
+    }
+  }, [hasElectronStorage, t]);
   
   const deleteNote = useCallback((id: string) => {
-    setNotes(prevNotes => prevNotes.filter(note => note.id !== id));
-    toast({
-      title: t('noteDeleted'),
-      description: t('successfullyDeleted'),
-    });
-  }, [t]);
+    if (hasElectronStorage) {
+      window.electronAPI?.notes.delete(id)
+        .then(success => {
+          if (success) {
+            setNotes(prevNotes => prevNotes.filter(note => note.id !== id));
+            toast({
+              title: t('noteDeleted'),
+              description: t('successfullyDeleted'),
+            });
+          } else {
+            toast({
+              title: t('error'),
+              description: t('failedToDeleteNote'),
+              variant: 'destructive',
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Failed to delete note:', error);
+          toast({
+            title: t('error'),
+            description: t('failedToDeleteNote'),
+            variant: 'destructive',
+          });
+        });
+    } else {
+      // Fallback for non-Electron environments
+      setNotes(prevNotes => prevNotes.filter(note => note.id !== id));
+      toast({
+        title: t('noteDeleted'),
+        description: t('successfullyDeleted'),
+      });
+    }
+  }, [hasElectronStorage, t]);
   
   const getNotesForDate = useCallback((date: Date): Note[] => {
     return notes.filter(note => {

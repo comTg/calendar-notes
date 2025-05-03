@@ -1,4 +1,3 @@
-
 /**
  * Define all translation keys to ensure type safety across the application
  */
@@ -84,4 +83,8 @@ export type TranslationKey =
   | 'task'
   | 'update'
   | 'showCalendar'
-  | 'showNotes';
+  | 'showNotes'
+  | 'error'
+  | 'failedToCreateNote'
+  | 'failedToUpdateNote'
+  | 'failedToDeleteNote';

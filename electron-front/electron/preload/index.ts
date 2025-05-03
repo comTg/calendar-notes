@@ -113,6 +113,14 @@ function useLoading() {
 // 添加应用API接口
 contextBridge.exposeInMainWorld('electronAPI', {
   getAppDataPath: () => ipcRenderer.invoke('get-app-data-path'),
+  // 笔记相关API
+  notes: {
+    getAll: () => ipcRenderer.invoke('get-all-notes'),
+    getForDate: (date: Date) => ipcRenderer.invoke('get-notes-for-date', date),
+    add: (note: any) => ipcRenderer.invoke('add-note', note),
+    update: (note: any) => ipcRenderer.invoke('update-note', note),
+    delete: (id: string) => ipcRenderer.invoke('delete-note', id),
+  }
 });
 
 const { appendLoading, removeLoading } = useLoading()

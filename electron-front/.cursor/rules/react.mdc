@@ -81,3 +81,6 @@ globs: **/*.tsx, **/*.jsx, components/**/*
 - Keep styles close to components
 - Use proper imports/exports
 - Document complex component logic 
+
+## install
+- install dependencies use yarn

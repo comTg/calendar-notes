@@ -135,7 +135,7 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px] animate-in scale-in">
+      <DialogContent className="sm:max-w-[850px] max-h-full overflow-y-auto animate-in scale-in">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>

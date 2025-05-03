@@ -162,7 +162,7 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="other">
                 <AccordionTrigger>其他配置</AccordionTrigger>
-                <AccordionContent>
+                <AccordionContent className="pl-2 pr-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                   <div className="grid gap-1 md:gap-2">
                     <label className="text-sm font-medium">{t('date')}</label>

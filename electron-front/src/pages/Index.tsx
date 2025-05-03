@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { useCalendar, CalendarProvider } from '@/context/CalendarContext';
+import { SearchProvider } from '@/context/SearchContext';
 import Header from '@/components/layout/Header';
 import MonthView from '@/components/ui/calendar-view/MonthView';
 import WeekView from '@/components/ui/calendar-view/WeekView';
@@ -126,7 +127,9 @@ const CalendarApp: React.FC = () => {
 const Index: React.FC = () => {
   return (
     <CalendarProvider>
-      <CalendarApp />
+      <SearchProvider>
+        <CalendarApp />
+      </SearchProvider>
     </CalendarProvider>
   );
 };

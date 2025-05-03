@@ -34,6 +34,8 @@ export type TranslationKey =
   | 'thisMonth'
   | 'older'
   | 'search'
+  | 'searchNotes'
+  | 'searchResults'
   | 'filterByTag'
   | 'noNotesFound'
   | 'all'

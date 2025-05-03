@@ -10,6 +10,7 @@ import HeaderViewToggle from './HeaderViewToggle';
 import HeaderControls from './HeaderControls';
 import HeaderNavigation from './HeaderNavigation';
 import { useIsMobile } from '@/hooks/use-mobile';
+import SearchBar from './SearchBar';
 
 interface HeaderProps {
   onAddNote: () => void;
@@ -63,6 +64,8 @@ const Header: React.FC<HeaderProps> = ({ onAddNote }) => {
           </div>
           
           <div className="flex items-center gap-1">
+            <SearchBar />
+            
             <Button
               variant="default"
               size="icon"
@@ -156,20 +159,24 @@ const Header: React.FC<HeaderProps> = ({ onAddNote }) => {
             calendarMode={calendarMode}
             setCalendarMode={setCalendarMode}
           />
-          
-          <Button
-            variant="default"
-            size="sm"
-            onClick={onAddNote}
-            className="focus-ring"
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            <span>{t('addNote')}</span>
-          </Button>
         </div>
       </div>
       
-      <HeaderControls />
+      <div className="flex items-center gap-2">
+        <SearchBar />
+        
+        <Button
+          variant="default"
+          size="sm"
+          onClick={onAddNote}
+          className="focus-ring"
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          <span>{t('addNote')}</span>
+        </Button>
+        
+        <HeaderControls />
+      </div>
     </header>
   );
 };

@@ -57,7 +57,7 @@ async function createWindow() {
     title: '日历笔记',
     width: 1200,
     height: 800,
-    icon: path.join(process.env.VITE_PUBLIC, 'favicon.ico'),
+    icon: path.join(process.env.VITE_PUBLIC, 'logo.png'),
     webPreferences: {
       preload,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production

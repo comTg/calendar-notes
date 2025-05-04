@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCalendar } from '@/context/CalendarContext';
 import { generateCalendarMonth } from '@/lib/calendar-utils';

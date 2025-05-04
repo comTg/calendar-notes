@@ -1,0 +1,41 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景超椭圆 -->
+  <path fill="#F8F9FC" d="M915.3 1024H108.7C48.7 1024 0 975.3 0 915.3V108.7C0 48.7 48.7 0 108.7 0h806.6C975.3 0 1024 48.7 1024 108.7v806.6c0 60-48.7 108.7-108.7 108.7z"/>
+  
+  <!-- 日历主体 -->
+  <g transform="translate(205 205)">
+      <!-- 日历底板 -->
+      <rect fill="#FFF" width="614" height="614" rx="50"/>
+      
+      <!-- 日历头部 -->
+      <rect fill="#4A7CFF" width="614" height="120" rx="30"/>
+      <text fill="#FFF" font-family="Helvetica" font-size="70" font-weight="bold" x="50" y="80">September</text>
+      
+      <!-- 日历网格 -->
+      <g transform="translate(40 160)" fill="none" stroke="#E2E8F0" stroke-width="4">
+          <!-- 水平线 -->
+          <path d="M0 90h534M0 260h534M0 430h534"/>
+          <!-- 垂直线 -->
+          <path d="M89 0v480M178 0v480M267 0v480M356 0v480M445 0v480"/>
+      </g>
+      
+      <!-- 笔记便签 -->
+      <g transform="translate(250 300)" filter="url(#shadow)">
+          <!-- 便签纸 -->
+          <path fill="#FFF4CC" d="M0 0h300v250q0 20 20 20l-40 40q-20 0-20 20v40l60-60h180q20 0 20-20V0H0z" rx="15"/>
+          <!-- 笔记内容 -->
+          <g fill="#FFD166" transform="translate(30 30)">
+              <rect width="240" height="20" ry="10"/>
+              <rect y="40" width="180" height="20" ry="10"/>
+              <rect y="80" width="210" height="20" ry="10"/>
+              <!-- 笔记图标 -->
+              <path d="M230 180l40 40-20 20-40-40z" fill="#4A7CFF"/>
+          </g>
+      </g>
+  </g>
+  
+  <!-- 投影效果 -->
+  <filter id="shadow">
+      <feDropShadow dx="15" dy="25" stdDeviation="30" flood-opacity="0.15"/>
+  </filter>
+</svg>

@@ -1,0 +1,18 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- 圆角背景 -->
+  <rect x="0" y="0" width="1024" height="1024" rx="205" ry="205" fill="#F5F5F5" />
+  
+  <!-- 日历主体 -->
+  <rect x="150" y="150" width="724" height="724" rx="50" fill="#FFFFFF" />
+  
+  <!-- 日历顶部标签 -->
+  <rect x="150" y="150" width="724" height="100" fill="#E0E0E0" />
+  
+  <!-- 日期网格线 -->
+  <line x1="300" y1="300" x2="874" y2="300" stroke="#CCCCCC" stroke-width="10" />
+  <line x1="300" y1="450" x2="874" y2="450" stroke="#CCCCCC" stroke-width="10" />
+  <line x1="300" y1="600" x2="874" y2="600" stroke="#CCCCCC" stroke-width="10" />
+  
+  <!-- 笔记元素（笔） -->
+  <path d="M700 700 L850 850 L800 900 L650 750 Z" fill="#FF9500" />
+</svg>

@@ -60,8 +60,8 @@ export function getMonthName(date: Date, locale: 'zh' | 'en' = 'en', format: 'lo
   return new Intl.DateTimeFormat(locale, { month: format }).format(date);
 }
 
-export function getFormattedDate(date: Date, locale: 'zh' | 'en' = 'en'): string {
-  const dateLocale = locale === 'zh' ? zhCN : enUS;
+export function getFormattedDate(date: Date, locale: 'zh' | 'en' | 'tr' = 'en'): string {
+  const dateLocale = locale === 'zh' ? zhCN : locale === 'tr' ? zhCN : enUS;
   if (locale === 'zh') {
     // Chinese date format (e.g., "2025年3月7日")
     return format(date, 'yyyy年MM月dd日', { locale: dateLocale });
@@ -71,8 +71,8 @@ export function getFormattedDate(date: Date, locale: 'zh' | 'en' = 'en'): string
   }
 }
 
-export function getFormattedDateTime(date: Date, locale: 'zh' | 'en' = 'en'): string {
-  const dateLocale = locale === 'zh' ? zhCN : enUS;
+export function getFormattedDateTime(date: Date, locale: 'zh' | 'en' | 'tr' = 'en'): string {
+  const dateLocale = locale === 'zh' ? zhCN : locale === 'tr' ? zhCN : enUS;
   if (locale === 'zh') {
     // Chinese date and time format (e.g., "2025年3月7日 12:09")
     return format(date, 'yyyy年MM月dd日 HH:mm', { locale: dateLocale });
@@ -82,8 +82,8 @@ export function getFormattedDateTime(date: Date, locale: 'zh' | 'en' = 'en'): st
   }
 }
 
-export function getFormattedTime(date: Date, locale: 'zh' | 'en' = 'en'): string {
-  const dateLocale = locale === 'zh' ? zhCN : enUS;
+export function getFormattedTime(date: Date, locale: 'zh' | 'en' | 'tr' = 'en'): string {
+  const dateLocale = locale === 'zh' ? zhCN : locale === 'tr' ? zhCN : enUS;
   if (locale === 'zh') {
     // 24-hour format for Chinese
     return format(date, 'HH:mm', { locale: dateLocale });

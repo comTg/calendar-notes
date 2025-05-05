@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useCalendar } from '@/context/CalendarContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { Note } from '@/types/calendar';
@@ -36,12 +35,14 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
   open, 
   onOpenChange, 
   note, 
-  mode,
+  mode: initialMode,
   preSelectedTime
 }) => {
-  const { selectedDate, addNote, updateNote } = useCalendar();
+  const { selectedDate, addNote, updateNote, notes } = useCalendar();
   const { t, locale } = useLanguage();
   
+  // 将模式状态化，允许从新增转为编辑
+  const [mode, setMode] = useState(initialMode);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [date, setDate] = useState<Date>(new Date());
@@ -52,8 +53,17 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
   const [timePickerOpen, setTimePickerOpen] = useState(false);
   const isMobile = useIsMobile();
   
+  // 自动保存相关状态
+  const [lastInputTime, setLastInputTime] = useState<number>(0);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [currentNoteId, setCurrentNoteId] = useState<string | null>(null);
+  const AUTO_SAVE_DELAY = 3000; // 3秒无输入后自动保存
+  const AUTO_SAVE_MESSAGE_DURATION = 2000; // 显示自动保存消息的时长
+  
   const handleTimeChange = useCallback((newTime: string, completed: boolean | undefined) => {
     setTime(newTime);
+    setLastInputTime(Date.now());
     
     // Only close the picker if both hour and minute have been selected
     if (completed) {
@@ -66,7 +76,8 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
   ];
   
   useEffect(() => {
-    if (mode === 'add') {
+    // 使用initialMode而不是mode，确保每次打开对话框时重置到初始状态
+    if (initialMode === 'add') {
       const initialDate = preSelectedTime || selectedDate || new Date();
       setDate(initialDate);
       
@@ -79,7 +90,9 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
       setTags([]);
       setColor('#3498db');
       setReminder(null);
-    } else if (mode === 'edit' && note) {
+      setCurrentNoteId(null); // 重置当前笔记ID
+      setMode('add'); // 重置模式
+    } else if (initialMode === 'edit' && note) {
       setTitle(note.title);
       setContent(note.content);
       setDate(new Date(note.date));
@@ -87,8 +100,111 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
       setTags(note.tags || []);
       setColor(note.color || '#3498db');
       setReminder(note.reminder || null);
+      setCurrentNoteId(note.id); // 设置当前编辑的笔记ID
+      setMode('edit'); // 设置为编辑模式
     }
-  }, [mode, note, selectedDate, preSelectedTime, open]);
+    
+    setAutoSaveStatus('idle');
+    setLastInputTime(0);
+  }, [initialMode, note, selectedDate, preSelectedTime, open]);
+  
+  // 处理内容变化，更新最后输入时间
+  const handleContentChange = (newContent: string) => {
+    setContent(newContent);
+    setLastInputTime(Date.now());
+  };
+  
+  // 处理标题变化，更新最后输入时间
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+    setLastInputTime(Date.now());
+  };
+  
+  // 自动保存功能
+  useEffect(() => {
+    // 清除之前的定时器
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+    
+    // 只有在已打开对话框且有输入时才设置自动保存
+    if (open && lastInputTime > 0 && (title.trim() || content.trim())) {
+      autoSaveTimerRef.current = setTimeout(() => {
+        autoSave();
+      }, AUTO_SAVE_DELAY);
+    }
+    
+    // 组件卸载时清除定时器
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [lastInputTime, title, content, open]);
+  
+  // 在Notes列表更新后，检查是否是我们刚自动保存的笔记
+  useEffect(() => {
+    if (mode === 'add' && autoSaveStatus === 'saving' && currentNoteId === null) {
+      // 通过搜索匹配的标题和内容找到我们刚刚创建的笔记
+      const possibleNewNote = notes.find(n => 
+        n.title === title && 
+        n.content === content && 
+        new Date(n.date).toDateString() === date.toDateString()
+      );
+      
+      if (possibleNewNote) {
+        setCurrentNoteId(possibleNewNote.id);
+        setMode('edit'); // 切换到编辑模式
+      }
+    }
+  }, [notes, mode, autoSaveStatus, currentNoteId, title, content, date]);
+  
+  // 自动保存逻辑
+  const autoSave = () => {
+    if (!title.trim() && !content.trim()) return;
+    
+    setAutoSaveStatus('saving');
+    
+    const [hours, minutes] = time.split(':').map(Number);
+    const noteDate = new Date(date);
+    noteDate.setHours(hours, minutes, 0, 0);
+    
+    const noteData = {
+      title,
+      content,
+      date: noteDate,
+      tags,
+      color,
+      reminder,
+      isPinned: false,
+      isCompleted: false,
+    };
+    
+    if (currentNoteId && mode === 'edit') {
+      // 在编辑模式下更新已有笔记
+      const currentNote = notes.find(n => n.id === currentNoteId);
+      if (currentNote) {
+        updateNote({
+          ...currentNote,
+          ...noteData
+        }, false);
+      }
+    } else {
+      // 在新增模式下创建新笔记
+      addNote(noteData, false);
+      // 实际的笔记ID将在notes列表更新后通过副作用获取
+    }
+    
+    // 显示自动保存成功状态
+    setTimeout(() => {
+      setAutoSaveStatus('saved');
+      
+      // 一段时间后隐藏保存提示
+      setTimeout(() => {
+        setAutoSaveStatus('idle');
+      }, AUTO_SAVE_MESSAGE_DURATION);
+    }, 500);
+  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,26 +213,34 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
     const noteDate = new Date(date);
     noteDate.setHours(hours, minutes, 0, 0);
     
-    if (mode === 'add') {
-      addNote({
-        title,
-        content,
-        date: noteDate,
-        tags,
-        color,
-        reminder,
-        isPinned: false,
-        isCompleted: false,
-      });
+    const noteData = {
+      title,
+      content,
+      date: noteDate,
+      tags,
+      color,
+      reminder,
+      isPinned: false,
+      isCompleted: false,
+    };
+    
+    if (currentNoteId) {
+      // 如果有当前编辑的笔记ID（可能是从自动保存获取的）
+      const currentNote = notes.find(n => n.id === currentNoteId);
+      if (currentNote) {
+        updateNote({
+          ...currentNote,
+          ...noteData
+        });
+      }
+    } else if (mode === 'add') {
+      // 新增模式且没有自动保存过
+      addNote(noteData);
     } else if (mode === 'edit' && note) {
+      // 编辑已有笔记
       updateNote({
         ...note,
-        title,
-        content,
-        date: noteDate,
-        tags,
-        color,
-        reminder,
+        ...noteData
       });
     }
     
@@ -126,11 +250,18 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
   const handleAddTag = (newTag: string) => {
     if (!tags.includes(newTag)) {
       setTags([...tags, newTag]);
+      setLastInputTime(Date.now());
     }
   };
   
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
+    setLastInputTime(Date.now());
+  };
+  
+  const handleColorSelect = (newColor: string) => {
+    setColor(newColor);
+    setLastInputTime(Date.now());
   };
   
   return (
@@ -141,8 +272,23 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
             <DialogTitle>
               {mode === 'add' ? t('addNote') : t('editNote')}
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground text-sm">
-              {mode === 'add' ? t('createNote') : t('updateNote')}
+            <DialogDescription className="text-muted-foreground text-sm flex items-center gap-3">
+              <span>{mode === 'add' ? t('createNote') : t('updateNote')}</span>
+              {/* 自动保存状态提示 */}
+              {autoSaveStatus !== 'idle' && (
+                <div className="text-center">
+                  <p className={cn(
+                    "text-sm transition-opacity duration-200 rounded-md px-2 inline-block",
+                    autoSaveStatus === 'saving' 
+                      ? "bg-yellow-50 text-yellow-600" 
+                      : "bg-emerald-50 text-emerald-600"
+                  )}>
+                    {autoSaveStatus === 'saving' 
+                      ? (t('autoSaving' as any) || '正在自动保存...') 
+                      : (t('autoSaved' as any) || '已自动保存')}
+                  </p>
+                </div>
+              )}
             </DialogDescription>
           </DialogHeader>
           
@@ -152,9 +298,9 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
               content={content}
               date={date}
               time={time}
-              setTitle={setTitle}
-              setContent={setContent}
-              setTime={setTime}
+              setTitle={handleTitleChange}
+              setContent={handleContentChange}
+              setTime={(time: string) => handleTimeChange(time, undefined)}
               timePickerOpen={timePickerOpen}
               setTimePickerOpen={setTimePickerOpen}
             />
@@ -183,7 +329,12 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
                         <Calendar
                           mode="single"
                           selected={date}
-                          onSelect={(date) => date && setDate(date)}
+                          onSelect={(date) => {
+                            if (date) {
+                              setDate(date);
+                              setLastInputTime(Date.now());
+                            }
+                          }}
                           initialFocus
                           className="p-3 pointer-events-auto"
                           locale={locale === 'zh' ? zhCN : enUS}
@@ -222,7 +373,7 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                   <ColorPicker
                     selectedColor={color}
-                    onColorSelect={setColor}
+                    onColorSelect={handleColorSelect}
                   />
                   
                   <TagSelector
@@ -235,8 +386,6 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-                  
-
           </div>
           
           <DialogFooter>

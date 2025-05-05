@@ -33,9 +33,9 @@ interface CalendarContextType {
   setSelectedNote: (note: Note | null) => void;
   nextPeriod: () => void;
   prevPeriod: () => void;
-  addNote: (note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateNote: (note: Note) => void;
-  deleteNote: (id: string) => void;
+  addNote: (note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>, showToast?: boolean) => void;
+  updateNote: (note: Note, showToast?: boolean) => void;
+  deleteNote: (id: string, showToast?: boolean) => void;
   getNotesForDate: (date: Date) => Note[];
 }
 
@@ -163,15 +163,17 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [calendarMode]);
   
-  const addNote = useCallback((note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addNote = useCallback((note: Omit<Note, 'id' | 'createdAt' | 'updatedAt'>, showToast: boolean = true) => {
     if (hasElectronStorage) {
       window.electronAPI?.notes.add(note)
         .then(newNote => {
           setNotes(prevNotes => [...prevNotes, newNote]);
-          toast({
-            title: t('noteAdded'),
-            description: t('successfullyCreated'),
-          });
+          if (showToast) {
+            toast({
+              title: t('noteAdded'),
+              description: t('successfullyCreated'),
+            });
+          }
         })
         .catch(error => {
           console.error('Failed to add note:', error);
@@ -191,24 +193,28 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       };
       
       setNotes(prevNotes => [...prevNotes, newNote]);
-      toast({
-        title: t('noteAdded'),
-        description: t('successfullyCreated'),
-      });
+      if (showToast) {
+        toast({
+          title: t('noteAdded'),
+          description: t('successfullyCreated'),
+        });
+      }
     }
   }, [hasElectronStorage, t]);
   
-  const updateNote = useCallback((updatedNote: Note) => {
+  const updateNote = useCallback((updatedNote: Note, showToast: boolean = true) => {
     if (hasElectronStorage) {
       window.electronAPI?.notes.update(updatedNote)
         .then(result => {
           setNotes(prevNotes => prevNotes.map(note => 
             note.id === updatedNote.id ? result : note
           ));
-          toast({
-            title: t('noteUpdated'),
-            description: t('successfullyUpdated'),
-          });
+          if (showToast) {
+            toast({
+              title: t('noteUpdated'),
+              description: t('successfullyUpdated'),
+            });
+          }
         })
         .catch(error => {
           console.error('Failed to update note:', error);
@@ -225,10 +231,12 @@ export const CalendarProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ? { ...updatedNote, updatedAt: new Date() } 
           : note
       ));
-      toast({
-        title: t('noteUpdated'),
-        description: t('successfullyUpdated'),
-      });
+      if (showToast) {
+        toast({
+          title: t('noteUpdated'),
+          description: t('successfullyUpdated'),
+        });
+      }
     }
   }, [hasElectronStorage, t]);
   

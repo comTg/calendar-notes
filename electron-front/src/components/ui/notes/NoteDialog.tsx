@@ -29,6 +29,7 @@ interface NoteDialogProps {
   note?: Note | null;
   mode: 'add' | 'edit';
   preSelectedTime?: Date;
+  onNoteCreated?: () => void;
 }
 
 const NoteDialog: React.FC<NoteDialogProps> = ({ 
@@ -36,7 +37,8 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
   onOpenChange, 
   note, 
   mode: initialMode,
-  preSelectedTime
+  preSelectedTime,
+  onNoteCreated
 }) => {
   const { selectedDate, addNote, updateNote, notes } = useCalendar();
   const { t, locale } = useLanguage();
@@ -242,6 +244,10 @@ const NoteDialog: React.FC<NoteDialogProps> = ({
         ...note,
         ...noteData
       });
+    }
+    // 调用笔记创建成功回调
+    if (onNoteCreated) {
+      onNoteCreated();
     }
     
     onOpenChange(false);

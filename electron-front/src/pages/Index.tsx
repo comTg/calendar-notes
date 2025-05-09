@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useCalendar, CalendarProvider } from '@/context/CalendarContext';
 import { SearchProvider } from '@/context/SearchContext';
 import Header from '@/components/layout/Header';
@@ -10,6 +10,7 @@ import NoteList from '@/components/ui/notes/NoteList';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage } from '@/context/LanguageContext';
+import confetti from 'canvas-confetti';
 
 const CalendarApp: React.FC = () => {
   const { calendarMode, selectedNote, selectedDate } = useCalendar();
@@ -30,6 +31,33 @@ const CalendarApp: React.FC = () => {
       setSelectedNote(null);
     }
   }, []);
+
+  const triggerConfetti = useCallback(() => {
+    const particleCount = 50
+    const startVelocity = 60
+    const yIndex = 0.9
+    // 从左侧发射礼花
+    confetti({
+      particleCount: particleCount,
+      startVelocity,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0, y: yIndex }
+    });
+    
+    // 从右侧发射礼花
+    confetti({
+      particleCount: particleCount,
+      startVelocity,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1, y: yIndex }
+    });
+  }, []);
+  
+  const handleNoteCreated = useCallback(() => {
+    triggerConfetti();
+  }, [triggerConfetti]);
   
   const calendarView = useMemo(() => {
     switch (calendarMode) {
@@ -73,6 +101,7 @@ const CalendarApp: React.FC = () => {
           onOpenChange={setIsAddNoteOpen}
           mode="add"
           preSelectedTime={selectedDate}
+          onNoteCreated={handleNoteCreated}
         />
         
         <NoteDialog 
@@ -80,6 +109,7 @@ const CalendarApp: React.FC = () => {
           onOpenChange={handleEditNoteClose}
           note={selectedNote}
           mode="edit"
+          onNoteCreated={handleNoteCreated}
         />
       </div>
     );
@@ -112,6 +142,7 @@ const CalendarApp: React.FC = () => {
         onOpenChange={setIsAddNoteOpen}
         mode="add"
         preSelectedTime={selectedDate}
+        onNoteCreated={handleNoteCreated}
       />
       
       <NoteDialog 
@@ -119,6 +150,7 @@ const CalendarApp: React.FC = () => {
         onOpenChange={handleEditNoteClose}
         note={selectedNote}
         mode="edit"
+        onNoteCreated={handleNoteCreated}
       />
     </div>
   );

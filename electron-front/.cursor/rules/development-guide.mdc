@@ -1,0 +1,58 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 开发指南
+
+## 开发流程
+
+- 使用`yarn dev`启动开发环境
+- 使用`yarn build`构建生产版本
+- 特定平台构建:
+  - `yarn build:mac` - macOS平台构建  
+  - `yarn build:win` - Windows平台构建
+
+## 组件开发
+
+- 使用功能组件和React钩子
+- 组件放在`src/components`目录中
+- UI组件使用shadcn/ui组件库
+- 使用TypeScript严格类型
+- 确保组件可复用性和可测试性
+
+## 状态管理
+
+- 本地状态使用`useState`和`useReducer`
+- 跨组件状态使用React上下文或Zustand
+- 表单处理使用React Hook Form
+- 异步数据获取使用React Query
+
+## 数据库和存储
+
+- 使用Better-SQLite3进行数据库操作
+- 编写清晰的数据库模式和查询
+- 优化SQLite性能和并发访问
+- 实现适当的错误处理和回滚策略  
+
+## 样式和UI
+
+- 使用Tailwind CSS进行样式设计
+- 遵循响应式设计原则
+- 实现适当的暗色模式支持
+- 使用主题变量保持一致性
+- 确保UI组件的可访问性
+
+## 测试
+
+- 编写单元测试和集成测试
+- 使用Vitest作为测试框架
+- 使用Playwright进行E2E测试
+- 测试覆盖关键功能和边缘情况
+
+## 版本控制
+
+- 遵循语义化版本控制
+- 使用功能分支开发流程
+- 编写清晰的提交信息
+- 定期合并主分支变更

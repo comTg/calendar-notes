@@ -1,0 +1,41 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 项目结构指南
+
+## 主要目录结构
+
+- `src/` - 前端React应用源代码
+  - `components/` - 可复用的UI组件
+  - `pages/` - 应用页面组件 
+  - `context/` - React上下文(Context)定义
+  - `hooks/` - 自定义React钩子
+  - `lib/` - 工具函数和库
+  - `types/` - TypeScript类型定义
+  - `assets/` - 静态资源
+
+- `electron/` - Electron主进程和预加载脚本
+  - `main/` - 主进程代码 
+  - `preload/` - 预加载脚本
+
+- `public/` - 静态资源文件
+
+## 入口文件
+
+- 前端入口: [src/main.tsx](mdc:src/main.tsx)
+- Electron主进程入口: [electron/main/index.ts](mdc:electron/main/index.ts)
+
+## 配置文件
+
+- Vite配置: [vite.config.ts](mdc:vite.config.ts)
+- TypeScript配置: [tsconfig.json](mdc:tsconfig.json)
+- Tailwind配置: [tailwind.config.js](mdc:tailwind.config.js) 
+- Electron构建配置: [electron-builder.json](mdc:electron-builder.json)
+
+## 命名约定
+
+- 组件文件使用Pascal命名法 (如: `Button.tsx`, `UserProfile.tsx`)
+- 工具函数和钩子使用camel命名法 (如: `useState.ts`, `formatDate.ts`)
+- 测试文件应添加`.test`或`.spec`后缀

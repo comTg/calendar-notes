@@ -30,7 +30,7 @@ const NoteFormFields: React.FC<NoteFormFieldsProps> = ({
   setContent,
 }) => {
   const { t } = useLanguage();
-  const [previewMode, setPreviewMode] = useState<'edit' | 'preview' | 'live'>('live');
+  const [previewMode, setPreviewMode] = useState<'edit' | 'preview' | 'live'>('edit');
   const isMobile = useIsMobile();
   const { resolvedTheme } = useTheme();
   const [colorMode, setColorMode] = useState<'light' | 'dark'>('light');
@@ -42,7 +42,7 @@ const NoteFormFields: React.FC<NoteFormFieldsProps> = ({
 
   // 在移动设备上默认使用编辑模式，桌面设备使用实时预览模式
   useEffect(() => {
-    setPreviewMode(isMobile ? 'edit' : 'live');
+    setPreviewMode(isMobile ? 'edit' : 'edit');
   }, [isMobile]);
 
   return (
